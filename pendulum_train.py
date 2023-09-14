@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import os
 from pathlib import Path
 
 import torch
@@ -11,19 +10,19 @@ import numpy as np
 import gymnasium as gym
 
 import matplotlib.pyplot as plt
-from matplotlib import animation
 
 from policy import PPOPolicy
 from ppobuffer import PPOBuffer
 
 
-NUM_STEPS = 2048                    # Number of timesteps data to collect before updating
+NUM_STEPS = 2048                    # Timesteps data to collect before updating
 BATCH_SIZE = 64                     # Batch size of training data
-TOTAL_TIMESTEPS = NUM_STEPS * 10 # 500   # Total timesteps to run
+TOTAL_TIMESTEPS = NUM_STEPS * 10  # 500   # Total timesteps to run
 GAMMA = 0.99                        # Discount factor
-GAE_LAM = 0.95                      # Lambda value for generalized advantage estimation
+GAE_LAM = 0.95                      # For generalized advantage estimation
 NUM_EPOCHS = 10                     # Number of epochs to train
 REPORT_STEPS = 1000                 # Number of timesteps between reports
+
 
 class PI_Network(nn.Module):
     def __init__(self, obs_dim, action_dim, lower_bound, upper_bound) -> None:
@@ -44,9 +43,11 @@ class PI_Network(nn.Module):
         y = F.tanh(self.fc2(y))
         action = self.fc3(y)
 
-        action = (action + 1)*(self.upper_bound - self.lower_bound)/2+self.lower_bound
+        action = ((action + 1) * (self.upper_bound - self.lower_bound) / 2 +
+                  self.lower_bound)
 
         return action
+
 
 class V_Network(nn.Module):
     def __init__(self, obs_dim) -> None:
@@ -62,7 +63,6 @@ class V_Network(nn.Module):
         values = self.fc3(y)
 
         return values
-        
 
 
 if __name__ == "__main__":
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
         # Calculate advantage and returns if it is the end of episode or
         # its time to update
-        if done or (t+1) % NUM_STEPS==0:
+        if done or (t + 1) % NUM_STEPS == 0:
             if done:
                 ep_count += 1
             # Value of last time-step
@@ -137,7 +137,7 @@ if __name__ == "__main__":
                 last_v=last_value)
             obs, _ = env.reset()
 
-        if (t+1) % NUM_STEPS==0:
+        if (t + 1) % NUM_STEPS == 0:
             season_count += 1
             # Update for epochs
             for ep in range(NUM_EPOCHS):
@@ -188,21 +188,24 @@ if __name__ == "__main__":
                         total_loss,
                         approx_kl,
                         std,
-                    ) = policy.update(obs_batch, action_batch, log_prob_batch, advantage_batch, return_batch)
+                    ) = policy.update(obs_batch, action_batch,
+                                      log_prob_batch, advantage_batch,
+                                      return_batch)
 
                     pi_losses.append(pi_loss.numpy())
                     v_losses.append(v_loss.numpy())
                     total_losses.append(total_loss.numpy())
                     approx_kls.append(approx_kl.numpy())
                     stds.append(std.numpy())
-            
+
             buffer.clear()
 
             mean_ep_reward = ep_reward / ep_count
             ep_reward, ep_count = 0.0, 0
 
             mean_rewards.append(mean_ep_reward)
-            pi_losses, v_losses, total_losses, approx_kls, stds = [], [], [], [], []
+            pi_losses, v_losses, total_losses, approx_kls, stds = (
+                    [], [], [], [], [])
 
     # Save policy and value network
     Path('saved_network').mkdir(parents=True, exist_ok=True)
