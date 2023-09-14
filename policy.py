@@ -1,12 +1,13 @@
-import numpy as np
-
 import torch
 from torch import nn
 from torch.distributions import Normal
 
 
 class PPOPolicy(nn.Module):
-    def __init__(self, pi_network, v_network, learning_rate, clip_range, value_coeff, obs_dim, action_dim, initial_std=1.0, max_grad_norm=0.5) -> None:
+    def __init__(self, pi_network, v_network, learning_rate, clip_range,
+                 value_coeff, obs_dim, action_dim, initial_std=1.0,
+                 max_grad_norm=0.5):
+
         super().__init__()
 
         (
@@ -29,10 +30,14 @@ class PPOPolicy(nn.Module):
             max_grad_norm
         )
 
-        # Gaussian policy will be used. So, log standard deviation is created as trainable variables
-        self.log_std =  nn.Parameter(torch.ones(self.action_dim) * torch.log(torch.tensor(initial_std)), requires_grad=True)
+        # Gaussian policy will be used. So, log standard deviation is created
+        # as trainable variables
+        self.log_std = nn.Parameter(torch.ones(self.action_dim) *
+                                    torch.log(torch.tensor(initial_std)),
+                                    requires_grad=True)
 
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        self.optimizer = torch.optim.Adam(self.parameters(),
+                                          lr=self.learning_rate)
 
     def forward(self, obs):
         pi_out = self.pi_network(obs)
@@ -74,8 +79,7 @@ class PPOPolicy(nn.Module):
     def evaluate_action(self, obs_batch, action_batch, training):
         """
         Evaluate taken action.
-        """     
-  
+        """
         obs_torch = obs_batch.clone().detach()
         action_torch = action_batch.clone().detach()
         dist, values = self.forward(obs_torch)
@@ -84,12 +88,14 @@ class PPOPolicy(nn.Module):
 
         return log_prob, values
 
-    def update(self, obs_batch, action_batch, log_prob_batch, advantage_batch, return_batch):
+    def update(self, obs_batch, action_batch, log_prob_batch, advantage_batch,
+               return_batch):
         """
         Performs one step gradient update of policy and value network.
         """
 
-        new_log_prob, values = self.evaluate_action(obs_batch, action_batch, training=True)
+        new_log_prob, values = self.evaluate_action(
+                obs_batch, action_batch, training=True)
 
         ratio = torch.exp(new_log_prob-log_prob_batch)
         clipped_ratio = torch.clip(
@@ -106,14 +112,13 @@ class PPOPolicy(nn.Module):
 
         self.optimizer.zero_grad()
         total_loss.backward()
-        
         torch.nn.utils.clip_grad_norm_(self.parameters(), self.max_grad_norm)
         self.optimizer.step()
 
         return (
-            pi_loss.detach(), 
-            value_loss.detach(), 
-            total_loss.detach(), 
-            (torch.mean((ratio - 1) - torch.log(ratio))).detach(), 
+            pi_loss.detach(),
+            value_loss.detach(),
+            total_loss.detach(),
+            (torch.mean((ratio - 1) - torch.log(ratio))).detach(),
             torch.exp(self.log_std).detach()
         )
