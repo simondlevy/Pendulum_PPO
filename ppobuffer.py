@@ -38,7 +38,9 @@ def compute_return_advantage(rewards, values, is_last_terminal, gamma, gae_lambd
 
 
 class PPOBuffer:
+
     def __init__(self, obs_dim, action_dim, buffer_capacity, seed=None) -> None:
+
         self.obs_dim = obs_dim
         self.action_dim = action_dim
         self.buffer_capacity = buffer_capacity
@@ -77,6 +79,7 @@ class PPOBuffer:
         self.start_index, self.pointer = 0, 0
 
     def record(self, obs, action, reward, values, log_prob):
+
         self.obs[self.pointer] = obs
         self.action[self.pointer] = action
         self.reward[self.pointer] = reward
@@ -153,5 +156,3 @@ class PPOBuffer:
 
     def clear(self):
         self.start_index, self.pointer = 0, 0
-
-
