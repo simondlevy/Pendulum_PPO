@@ -8,7 +8,8 @@ Date:       Aug 3, 2022
 import numpy as np
 
 
-def compute_return_advantage(rewards, values, is_last_terminal, gamma, gae_lambda, last_value):
+def compute_return_advantage(
+        rewards, values, is_last_terminal, gamma, gae_lambda, last_value):
     """
     Computes returns and advantage based on generalized advantage estimation.
     """
@@ -20,26 +21,29 @@ def compute_return_advantage(rewards, values, is_last_terminal, gamma, gae_lambd
 
     tmp = 0.0
     for k in reversed(range(N)):
-        if k==N-1:
+        if k == N - 1:
             next_non_terminal = 1 - is_last_terminal
             next_values = last_value
         else:
             next_non_terminal = 1
             next_values = values[k+1]
 
-        delta = rewards[k] + gamma * next_non_terminal * next_values - values[k]
+        delta = (rewards[k] +
+                 gamma * next_non_terminal * next_values -
+                 values[k])
+
         tmp = delta + gamma * gae_lambda * next_non_terminal * tmp
-        
+
         advantages[k] = tmp
-    
-    returns = advantages +  values
+
+    returns = advantages + values
 
     return returns, advantages
 
 
 class PPOBuffer:
 
-    def __init__(self, obs_dim, action_dim, buffer_capacity, seed=None) -> None:
+    def __init__(self, obs_dim, action_dim, buffer_capacity, seed=None):
 
         self.obs_dim = obs_dim
         self.action_dim = action_dim
@@ -74,7 +78,6 @@ class PPOBuffer:
             dtype=np.float32
         )
 
-
         self.rng = np.random.default_rng(seed=seed)
         self.start_index, self.pointer = 0, 0
 
@@ -92,14 +95,10 @@ class PPOBuffer:
         path_slice = slice(self.start_index, self.pointer)
         values_t = self.values[path_slice]
 
-        self.returns[path_slice], self.advantage[path_slice] = compute_return_advantage(
-            self.reward[path_slice],
-            values_t,
-            is_last_terminal,
-            gamma,
-            gae_lam,
-            last_v
-        )
+        self.returns[path_slice], self.advantage[path_slice] = (
+                compute_return_advantage(self.reward[path_slice], values_t,
+                                         is_last_terminal, gamma, gae_lam,
+                                         last_v))
 
         self.start_index = self.pointer
 
@@ -116,11 +115,10 @@ class PPOBuffer:
         }
 
     def get_mini_batch(self, batch_size):
-        assert batch_size <= self.pointer, "Batch size must be smaller than number of data."
+        assert batch_size <= self.pointer, \
+                "Batch size must be smaller than number of data."
         indices = np.arange(self.pointer)
         self.rng.shuffle(indices)
-        
-
         split_indices = []
         point = batch_size
         while point < self.pointer:
@@ -151,7 +149,7 @@ class PPOBuffer:
                     'advantage': temp_data['advantage'][k],
                 }
             )
-        
+
         return data_out
 
     def clear(self):
