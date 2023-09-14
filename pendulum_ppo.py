@@ -117,8 +117,9 @@ if __name__ == "__main__":
 
             clipped_action = np.clip(action, lower_bound, upper_bound)
 
-            next_obs, reward, done, _ = env.step(clipped_action)
+            next_obs, reward, terminated, truncated, _ = env.step(clipped_action)
 
+            done = terminated or truncated
 
             ep_reward += reward
 
@@ -139,7 +140,7 @@ if __name__ == "__main__":
                     gae_lam=GAE_LAM,
                     is_last_terminal=done,
                     last_v=last_value)
-                obs = env.reset()
+                obs, _ = env.reset()
 
             if (t+1) % NUM_STEPS==0:
                 season_count += 1
@@ -243,7 +244,7 @@ if __name__ == "__main__":
         # Load saved policy network
         pi_network = PI_Network(obs_dim, action_dim, lower_bound, upper_bound)
         pi_network.load_state_dict(torch.load('saved_network/pi_network.pth'))
-        obs = env.reset()
+        obs, _ = env.reset()
         frames = []
         for _ in range(300):
             obs_torch = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
@@ -251,7 +252,7 @@ if __name__ == "__main__":
             clipped_action = np.clip(action[0], lower_bound, upper_bound)
 
             frames.append(env.render(mode="rgb_array"))
-            obs, reward, done, _ = env.step(clipped_action)
+            obs, reward, terminated, truncated, _ = env.step(clipped_action)
         env.close()
         save_frames_as_gif(frames, filename="saved_images/pendulum_run.gif")
 

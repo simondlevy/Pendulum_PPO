@@ -51,8 +51,6 @@ class PPOPolicy(nn.Module):
 
         obs_torch = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
 
-        exit(0)
-
         dist, values = self.forward(obs_torch)
 
         action = dist.sample()
