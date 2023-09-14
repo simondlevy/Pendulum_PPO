@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 from torch import nn
 from torch.distributions import Normal
@@ -46,12 +48,20 @@ class PPOPolicy(nn.Module):
         """
         Sample action based on current policy
         """
+
         obs_torch = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
+
+        exit(0)
+
         dist, values = self.forward(obs_torch)
+
         action = dist.sample()
+
         log_prob = torch.sum(dist.log_prob(action), dim=1)
 
-        return action[0].detach().numpy(), torch.squeeze(log_prob).detach().numpy(), torch.squeeze(values).detach().numpy()
+        return (action[0].detach().numpy(),
+                torch.squeeze(log_prob).detach().numpy(),
+                torch.squeeze(values).detach().numpy())
 
     def get_values(self, obs):
         """

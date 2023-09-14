@@ -74,18 +74,17 @@ if __name__ == "__main__":
     lower_bound = env.action_space.low
     upper_bound = env.action_space.high
 
-    exit(0)
-    
     train_test = "train" if len(sys.argv)==1 else sys.argv[1]
+
     if train_test=="train":
 
-        # Create networks
         pi_network = PI_Network(obs_dim, action_dim, lower_bound, upper_bound)
         v_network = V_Network(obs_dim)
 
         learning_rate = 3e-4
 
         buffer = PPOBuffer(obs_dim, action_dim, NUM_STEPS)
+
         policy = PPOPolicy(
             pi_network,
             v_network,
@@ -105,11 +104,21 @@ if __name__ == "__main__":
         pi_losses, v_losses, total_losses, approx_kls, stds = [], [], [], [], []
         mean_rewards = []
 
-        obs = env.reset()
+        obs, _ = env.reset()
+
         for t in range(TOTAL_TIMESTEPS):
+
+            if t % 10000 == 0:
+                print(t, '/', TOTAL_TIMESTEPS)
+
             action, log_prob, values = policy.get_action(obs)
+
+            continue
+
             clipped_action = np.clip(action, lower_bound, upper_bound)
+
             next_obs, reward, done, _ = env.step(clipped_action)
+
 
             ep_reward += reward
 
@@ -212,6 +221,9 @@ if __name__ == "__main__":
         plt.savefig("saved_images/season_reward.png")
 
     elif train_test=="eval" or train_test=="test":
+
+        print('testing')
+
         # Function to create gif animation. Taken from: https://gist.github.com/botforge/64cbb71780e6208172bbf03cd9293553 
         def save_frames_as_gif(frames, filename):
 
